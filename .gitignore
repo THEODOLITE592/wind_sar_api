@@ -1,0 +1,28 @@
+__pycache__/
+*.pyc
+
+# Virtual environments
+sar_venv/
+feature_env/
+
+# Data
+data/
+new_data/
+ascat_data/
+ascat_test/
+
+# Outputs
+outputs/
+temp/
+
+
+# Secrets
+.env
+*.json
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
