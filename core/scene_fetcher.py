@@ -1,40 +1,42 @@
 import ee
-
-from core.config import (
-    PROJECT_ID
-)
-
-# =====================================
-# INITIALIZE GEE
-# =====================================
+import streamlit as st
+import json
+import tempfile
 
 def initialize_gee():
-    """
-    Initialize Google Earth Engine.
-    """
 
     try:
+        ee.Number(1).getInfo()
+        return
+    except:
+        pass
 
-        ee.Initialize(
-            project=PROJECT_ID
+    service_account = st.secrets["gcp_service_account"]
+
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        suffix=".json",
+        delete=False
+    ) as fp:
+
+        json.dump(
+            dict(service_account),
+            fp
         )
 
-        print(
-            "GEE initialized"
-        )
+        key_path = fp.name
 
-    except Exception:
+    credentials = ee.ServiceAccountCredentials(
+        service_account["client_email"],
+        key_path
+    )
 
-        ee.Authenticate()
+    ee.Initialize(
+        credentials,
+        project="crop-472500"
+    )
 
-        ee.Initialize(
-            project=PROJECT_ID
-        )
-
-        print(
-            "GEE authenticated and initialized"
-        )
-
+    print("GEE initialized")
 
 # =====================================
 # FETCH SINGLE SENTINEL SCENE

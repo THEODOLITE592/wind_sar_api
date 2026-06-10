@@ -17,6 +17,8 @@ temp/
 
 service-account.json
 
+.streamlit/secrets.toml
+
 # Secrets
 .env
 *.json
