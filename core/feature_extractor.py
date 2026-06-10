@@ -179,6 +179,88 @@ def preprocess_sar(
         img
     )
 
+def preprocess_arrays(
+    vv,
+    angle
+):
+
+    vv = np.nan_to_num(vv)
+    angle = np.nan_to_num(angle)
+
+    p2 = np.percentile(vv, 2)
+    p98 = np.percentile(vv, 98)
+
+    vv = np.clip(
+        vv,
+        p2,
+        p98
+    )
+
+    vv = (
+        vv - vv.min()
+    ) / (
+        vv.max() - vv.min() + 1e-8
+    )
+
+    angle = (
+        angle - angle.min()
+    ) / (
+        angle.max() - angle.min() + 1e-8
+    )
+
+    img = np.stack(
+        [
+            vv,
+            angle,
+            vv
+        ],
+        axis=-1
+    )
+
+    img = (
+        img * 255
+    ).astype(
+        np.uint8
+    )
+
+    img = Image.fromarray(
+        img
+    )
+
+    return transform(
+        img
+    )
+
+def extract_features_array(
+    vv,
+    angle
+):
+
+    tensor = preprocess_arrays(
+        vv,
+        angle
+    )
+
+    tensor = (
+        tensor
+        .unsqueeze(0)
+        .to(DEVICE)
+    )
+
+    with torch.no_grad():
+
+        features = resnet(
+            tensor
+        )
+
+    features = (
+        features
+        .cpu()
+        .numpy()
+        .flatten()
+    )
+
+    return features
 
 # =====================================
 # EXPORT EE IMAGE
@@ -223,6 +305,52 @@ def export_patch(
 # =====================================
 # FEATURE EXTRACTION
 # =====================================
+
+def extract_features_batch(
+    vv_patches,
+    angle_patches
+):
+
+    tensors = []
+
+    for vv, angle in zip(
+        vv_patches,
+        angle_patches
+    ):
+
+        tensor = preprocess_arrays(
+            vv,
+            angle
+        )
+
+        tensors.append(
+            tensor
+        )
+
+    batch = torch.stack(
+        tensors
+    ).to(
+        DEVICE
+    )
+
+    with torch.no_grad():
+
+        features = resnet(
+            batch
+        )
+
+    features = (
+        features
+        .cpu()
+        .numpy()
+    )
+
+    features = features.reshape(
+        features.shape[0],
+        -1
+    )
+
+    return features
 
 def extract_features(
     sar_image,
@@ -324,3 +452,52 @@ if __name__ == "__main__":
         print(
             feats[:10]
         )
+
+if __name__ == "__main__":
+
+    from core.tile_extractor import TileExtractor
+
+    extractor = TileExtractor(
+        "outputs/sar_scene.tif"
+    )
+
+    vv_patches = []
+    angle_patches = []
+
+    locations = [
+
+        (19.02, 72.82),
+        (19.04, 72.84),
+        (19.06, 72.86)
+
+    ]
+
+    for lat, lon in locations:
+
+        patch = extractor.extract_patch(
+            lat,
+            lon
+        )
+
+        if patch is None:
+            continue
+
+        vv_patches.append(
+            patch["vv"]
+        )
+
+        angle_patches.append(
+            patch["angle"]
+        )
+
+    features = extract_features_batch(
+
+        vv_patches,
+        angle_patches
+    )
+
+    print(
+        features.shape
+    )
+
+    extractor.close()

@@ -127,6 +127,70 @@ def predict_residuals(
     }
 
 
+def predict_residuals_batch(
+
+    features,
+
+    u_era5,
+    v_era5,
+
+    lat,
+    lon
+):
+
+    feature_names = [
+
+        f"f_{i:03d}"
+        for i in range(512)
+
+    ]
+
+    X = pd.DataFrame(
+
+        features,
+
+        columns=feature_names
+    )
+
+    X = scaler.transform(
+        X
+    )
+
+    X = pca.transform(
+        X
+    )
+
+    extra = np.column_stack([
+
+        u_era5,
+        v_era5,
+
+        lat,
+        lon
+    ])
+
+    X = np.hstack([
+        X,
+        extra
+    ])
+
+    residual_u = model_u.predict(
+        X
+    )
+
+    residual_v = model_v.predict(
+        X
+    )
+
+    return {
+
+        "residual_u":
+            residual_u,
+
+        "residual_v":
+            residual_v
+    }
+
 # =====================================
 # TEST
 # =====================================
@@ -134,20 +198,26 @@ def predict_residuals(
 if __name__ == "__main__":
 
     dummy = np.random.rand(
-        512
+        5,512
     )
 
-    result = predict_residuals(
+    result = predict_residuals_batch(
 
-        features_512=dummy,
+        features=dummy,
 
-        u_era5=2.0,
+        u_era5=np.ones(5),
 
-        v_era5=-1.0,
+        v_era5=np.ones(5),
 
-        lat=19.0,
+        lat=np.ones(5)*19,
 
-        lon=72.8
+        lon=np.ones(5)*72.8
     )
 
-    print(result)
+    print(
+        result["residual_u"].shape
+    )
+
+    print(
+        result["residual_v"].shape
+    )

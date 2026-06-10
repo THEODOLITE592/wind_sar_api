@@ -8,7 +8,7 @@ PATCH_SIZE_M = 2000
 IMAGE_SIZE = 224
 
 # Grid spacing for inference
-GRID_SPACING_KM = 5
+GRID_SPACING_KM = 1
 
 # Models
 MODEL_U_PATH = "models/model_u.pkl"
