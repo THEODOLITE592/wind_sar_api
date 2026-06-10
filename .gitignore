@@ -15,6 +15,7 @@ ascat_test/
 outputs/
 temp/
 
+service-account.json
 
 # Secrets
 .env
